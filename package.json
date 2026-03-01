@@ -1,0 +1,31 @@
+{
+  "name": "township-address-book",
+  "version": "1.0.0",
+  "description": "乡镇工作通讯录",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --mac --linux --dir",
+    "build-zip": "electron-builder --win --mac --linux --zip"
+  },
+  "keywords": ["通讯录", "乡镇", "工作"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.township.addressbook",
+    "productName": "乡镇工作通讯录",
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "mac": {
+      "target": ["dmg", "zip"]
+    },
+    "linux": {
+      "target": ["deb", "rpm", "AppImage"]
+    }
+  }
+}

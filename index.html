@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>乡镇工作通讯录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        light: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- 顶部导航栏 -->
+    <header class="bg-primary text-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa fa-address-book text-2xl"></i>
+                    <h1 class="text-xl font-bold">乡镇工作通讯录</h1>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="download-btn" class="bg-white text-primary px-3 py-2 rounded-lg shadow hover:bg-gray-100 transition-all-300 flex items-center">
+                        <i class="fa fa-download mr-2"></i>下载应用
+                    </button>
+                    <button id="voice-btn" class="bg-white text-primary px-3 py-2 rounded-lg shadow hover:bg-gray-100 transition-all-300 flex items-center">
+                        <i class="fa fa-microphone mr-2"></i>语音
+                    </button>
+                    <button id="ocr-btn" class="bg-white text-primary px-3 py-2 rounded-lg shadow hover:bg-gray-100 transition-all-300 flex items-center">
+                        <i class="fa fa-camera mr-2"></i>OCR
+                    </button>
+                    <button id="export-btn" class="bg-white text-primary px-3 py-2 rounded-lg shadow hover:bg-gray-100 transition-all-300 flex items-center">
+                        <i class="fa fa-download mr-2"></i>导出
+                    </button>
+                    <button id="add-btn" class="bg-white text-primary px-3 py-2 rounded-lg shadow hover:bg-gray-100 transition-all-300 flex items-center">
+                        <i class="fa fa-plus mr-2"></i>添加
+                    </button>
+                    <button id="user-btn" class="bg-white text-primary px-3 py-2 rounded-lg shadow hover:bg-gray-100 transition-all-300 flex items-center">
+                        <i class="fa fa-user mr-2"></i>登录
+                    </button>
+                </div>
+            </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- 搜索栏 -->
+        <div class="mb-6">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="搜索人员、单位或职务..." class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                <i class="fa fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+
+        <!-- 分类标签 -->
+        <div class="mb-6 overflow-x-auto">
+            <div class="flex space-x-2 pb-2">
+                <button class="category-btn bg-primary text-white px-4 py-2 rounded-full whitespace-nowrap">全部</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full border border-gray-300 whitespace-nowrap hover:bg-gray-100">科室</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full border border-gray-300 whitespace-nowrap hover:bg-gray-100">村庄</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full border border-gray-300 whitespace-nowrap hover:bg-gray-100">领导</button>
+                <button class="category-btn bg-white text-gray-700 px-4 py-2 rounded-full border border-gray-300 whitespace-nowrap hover:bg-gray-100">后勤</button>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 单位分类卡片 -->
+            <div class="bg-white rounded-xl card-shadow p-4">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-sitemap text-primary mr-2"></i>单位分类
+                </h2>
+                <div class="space-y-3" id="unit-categories">
+                    <!-- 科室分类 -->
+                    <div class="unit-category">
+                        <div class="flex justify-between items-center cursor-pointer unit-header" data-category="科室">
+                            <h3 class="font-medium text-gray-800">科室</h3>
+                            <i class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+                        </div>
+                        <div class="unit-content mt-2 space-y-2 pl-4 border-l-2 border-gray-200">
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>党政办</span>
+                                <span class="text-sm text-gray-500">5人</span>
+                            </div>
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>经济发展办</span>
+                                <span class="text-sm text-gray-500">3人</span>
+                            </div>
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>社会事务办</span>
+                                <span class="text-sm text-gray-500">4人</span>
+                            </div>
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>综合治理办</span>
+                                <span class="text-sm text-gray-500">3人</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 村庄分类 -->
+                    <div class="unit-category">
+                        <div class="flex justify-between items-center cursor-pointer unit-header" data-category="村庄">
+                            <h3 class="font-medium text-gray-800">村庄</h3>
+                            <i class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+                        </div>
+                        <div class="unit-content mt-2 space-y-2 pl-4 border-l-2 border-gray-200">
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>东村</span>
+                                <span class="text-sm text-gray-500">3人</span>
+                            </div>
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>西村</span>
+                                <span class="text-sm text-gray-500">2人</span>
+                            </div>
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>南村</span>
+                                <span class="text-sm text-gray-500">3人</span>
+                            </div>
+                            <div class="unit-item flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                <span>北村</span>
+                                <span class="text-sm text-gray-500">2人</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人员列表 -->
+            <div class="bg-white rounded-xl card-shadow p-4">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-users text-primary mr-2"></i>人员列表
+                </h2>
+                <div class="space-y-3" id="person-list">
+                    <!-- 人员列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <!-- 管理关系图 -->
+            <div class="bg-white rounded-xl card-shadow p-4 md:col-span-2">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-sitemap text-primary mr-2"></i>管理关系图
+                </h2>
+                <div id="relationship-chart" class="w-full h-80"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <footer class="bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 z-40">
+        <div class="container mx-auto">
+            <div class="flex justify-around py-3">
+                <button class="nav-btn flex flex-col items-center text-primary">
+                    <i class="fa fa-home text-xl"></i>
+                    <span class="text-xs mt-1">首页</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center text-gray-500">
+                    <i class="fa fa-users text-xl"></i>
+                    <span class="text-xs mt-1">亲属</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center text-gray-500">
+                    <i class="fa fa-newspaper-o text-xl"></i>
+                    <span class="text-xs mt-1">八卦</span>
+                </button>
+                <button class="nav-btn flex flex-col items-center text-gray-500">
+                    <i class="fa fa-user text-xl"></i>
+                    <span class="text-xs mt-1">我的</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 内容区域 -->
+    <div id="content-areas">
+        <!-- 首页内容 -->
+        <div id="home-content" class="content-area">
+            <!-- 主内容区已在上面定义 -->
+        </div>
+
+        <!-- 亲属板块 -->
+        <div id="family-content" class="content-area hidden">
+            <div class="container mx-auto px-4 py-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-users text-primary mr-2"></i>亲属关系
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl card-shadow p-4">
+                        <h3 class="font-medium mb-3">亲属关系图</h3>
+                        <div id="family-chart" class="w-full h-80"></div>
+                    </div>
+                    <div class="bg-white rounded-xl card-shadow p-4">
+                        <h3 class="font-medium mb-3">亲属列表</h3>
+                        <div class="space-y-3" id="family-list">
+                            <!-- 亲属列表将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 八卦板块 -->
+        <div id="gossip-content" class="content-area hidden">
+            <div class="container mx-auto px-4 py-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-newspaper-o text-primary mr-2"></i>乡镇八卦
+                </h2>
+                <div class="space-y-4" id="gossip-list">
+                    <!-- 八卦列表将通过JavaScript动态生成 -->
+                </div>
+                <button id="add-gossip-btn" class="mt-6 w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center justify-center">
+                    <i class="fa fa-plus mr-2"></i> 添加八卦
+                </button>
+            </div>
+        </div>
+
+        <!-- 我的页面 -->
+        <div id="profile-content" class="content-area hidden">
+            <div class="container mx-auto px-4 py-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-user text-primary mr-2"></i>个人中心
+                </h2>
+                <div class="bg-white rounded-xl card-shadow p-4">
+                    <div class="flex items-center mb-4">
+                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-medium">管理员</h3>
+                            <p class="text-sm text-gray-500">乡镇工作通讯录</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span>数据管理</span>
+                            <i class="fa fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span>设置</span>
+                            <i class="fa fa-chevron-right text-gray-400"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span>关于</span>
+                            <i class="fa fa-chevron-right text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑模态框 -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold" id="modal-title">添加人员</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="person-form">
+                <input type="hidden" id="person-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+                        <input type="text" id="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">单位/部门</label>
+                        <select id="department" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="党政办">党政办</option>
+                            <option value="经济发展办">经济发展办</option>
+                            <option value="社会事务办">社会事务办</option>
+                            <option value="综合治理办">综合治理办</option>
+                            <option value="东村">东村</option>
+                            <option value="西村">西村</option>
+                            <option value="南村">南村</option>
+                            <option value="北村">北村</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">职务</label>
+                        <input type="text" id="position" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">电话</label>
+                        <input type="tel" id="phone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">分工</label>
+                        <textarea id="responsibility" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 人员详情模态框 -->
+    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold" id="detail-title">人员详情</h3>
+                <button id="close-detail-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4" id="person-details">
+                <div class="flex items-center">
+                    <div class="w-20 text-gray-500">姓名</div>
+                    <div class="flex-1 font-medium" id="detail-name">张三</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-20 text-gray-500">单位</div>
+                    <div class="flex-1" id="detail-department">党政办</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-20 text-gray-500">职务</div>
+                    <div class="flex-1" id="detail-position">主任</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-20 text-gray-500">电话</div>
+                    <div class="flex-1" id="detail-phone">13800138001</div>
+                </div>
+                <div>
+                    <div class="w-20 text-gray-500 mb-1">分工</div>
+                    <div class="flex-1" id="detail-responsibility">负责党政办全面工作，协调各部门事务</div>
+                </div>
+                <div class="pt-4 border-t border-gray-200 flex space-x-3">
+                    <button id="edit-btn" class="flex-1 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 flex items-center justify-center">
+                        <i class="fa fa-edit mr-2"></i> 编辑
+                    </button>
+                    <button id="delete-btn" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center">
+                        <i class="fa fa-trash mr-2"></i> 删除
+                    </button>
+                </div>
+                <div class="mt-3">
+                    <button class="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center justify-center">
+                        <i class="fa fa-phone mr-2"></i> 拨打电话
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 语音转文字模态框 -->
+    <div id="voice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">语音转文字</h3>
+                <button id="close-voice-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="p-4 border border-gray-200 rounded-lg text-center">
+                    <button id="start-voice-btn" class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl mx-auto">
+                        <i class="fa fa-microphone"></i>
+                    </button>
+                    <p class="mt-2 text-gray-600">点击开始录音</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">识别结果</label>
+                    <textarea id="voice-result" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" rows="4" readonly></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-voice-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                <button id="copy-voice-btn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">复制</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片转文字识别模态框 -->
+    <div id="ocr-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">图片转文字</h3>
+                <button id="close-ocr-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择图片</label>
+                    <input type="file" id="ocr-image" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg text-center" id="ocr-preview">
+                    <i class="fa fa-image text-4xl text-gray-400"></i>
+                    <p class="mt-2 text-gray-600">预览图片</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">识别结果</label>
+                    <textarea id="ocr-result" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" rows="4" readonly></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-ocr-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                <button id="start-ocr-btn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">识别</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加八卦模态框 -->
+    <div id="gossip-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">添加八卦</h3>
+                <button id="close-gossip-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="gossip-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                        <input type="text" id="gossip-title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">内容</label>
+                        <textarea id="gossip-content" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" rows="4"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">相关人员</label>
+                        <select id="gossip-person" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择</option>
+                            <!-- 人员选项将通过JavaScript动态生成 -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">添加表情包</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">😊</button>
+                            <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">😂</button>
+                            <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">👍</button>
+                            <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">❤️</button>
+                            <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">🎉</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-gossip-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 登录/注册模态框 -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold" id="login-modal-title">用户登录</h3>
+                <button id="close-login-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="login-tabs flex mb-4 border-b">
+                <button class="login-tab flex-1 py-2 text-center font-medium text-primary border-b-2 border-primary">登录</button>
+                <button class="login-tab flex-1 py-2 text-center font-medium text-gray-500">注册</button>
+            </div>
+            <form id="login-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" class="mr-2">
+                        <label for="remember" class="text-sm text-gray-600">记住我</label>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-login-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">登录</button>
+                </div>
+            </form>
+            <form id="register-form" class="hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                        <input type="text" id="register-username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                        <input type="password" id="register-password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">确认密码</label>
+                        <input type="password" id="register-confirm-password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">用户类型</label>
+                        <select id="user-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" disabled>
+                            <option value="user">普通用户</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">管理员账号无法通过注册获取</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-register-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">注册</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 下载应用模态框 -->
+    <div id="download-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">下载应用</h3>
+                <button id="close-download-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="p-4 border border-gray-200 rounded-lg text-center">
+                    <h4 class="font-medium mb-2">自动检测设备</h4>
+                    <p class="text-sm text-gray-600 mb-4">我们会根据您的设备类型推荐合适的下载版本</p>
+                    <button id="auto-download-btn" class="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                        自动下载
+                    </button>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-2">手动选择</h4>
+                    <div class="space-y-2">
+                        <button class="w-full py-2 border border-gray-300 rounded-lg text-left px-4 hover:bg-gray-50 flex items-center justify-between">
+                            <span>Windows 版本</span>
+                            <i class="fa fa-windows text-blue-500"></i>
+                        </button>
+                        <button class="w-full py-2 border border-gray-300 rounded-lg text-left px-4 hover:bg-gray-50 flex items-center justify-between">
+                            <span>macOS 版本</span>
+                            <i class="fa fa-apple text-gray-800"></i>
+                        </button>
+                        <button class="w-full py-2 border border-gray-300 rounded-lg text-left px-4 hover:bg-gray-50 flex items-center justify-between">
+                            <span>Linux 版本</span>
+                            <i class="fa fa-linux text-orange-500"></i>
+                        </button>
+                        <button class="w-full py-2 border border-gray-300 rounded-lg text-left px-4 hover:bg-gray-50 flex items-center justify-between">
+                            <span>Android 版本</span>
+                            <i class="fa fa-android text-green-500"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论模态框 -->
+    <div id="comment-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">评论</h3>
+                <button id="close-comment-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="max-h-60 overflow-y-auto" id="comment-list">
+                    <!-- 评论列表将通过JavaScript动态生成 -->
+                </div>
+                <div>
+                    <textarea id="comment-content" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" rows="3" placeholder="写下你的评论..."></textarea>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">😊</button>
+                        <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">😂</button>
+                        <button type="button" class="emoji-btn px-2 py-1 border border-gray-300 rounded">👍</button>
+                    </div>
+                    <button id="submit-comment-btn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">发布评论</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 部门层级关系模态框 -->
+    <div id="hierarchy-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">部门层级关系</h3>
+                <button id="close-hierarchy-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="hierarchy-chart" class="w-full h-96"></div>
+        </div>
+    </div>
+
+    <script>
+        // 从localStorage加载数据
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('townshipAddressBook');
+            if (savedData) {
+                return JSON.parse(savedData);
+            }
+            // 默认数据
+            return [
+                { id: 1, name: '张三', department: '党政办', position: '主任', phone: '13800138001', responsibility: '负责党政办全面工作，协调各部门事务', family: [{ name: '张小明', relationship: '儿子', phone: '13800138002' }] },
+                { id: 2, name: '李四', department: '经济发展办', position: '副主任', phone: '13900139001', responsibility: '负责经济发展规划和项目管理', family: [{ name: '李小红', relationship: '女儿', phone: '13900139002' }] },
+                { id: 3, name: '王五', department: '东村', position: '党支部书记', phone: '13700137001', responsibility: '负责东村全面工作，党建和乡村振兴', family: [{ name: '王大牛', relationship: '弟弟', phone: '13700137002' }] },
+                { id: 4, name: '赵六', department: '社会事务办', position: '科员', phone: '13600136001', responsibility: '负责社会救助和民生事务', family: [{ name: '赵小花', relationship: '妹妹', phone: '13600136002' }] },
+                { id: 5, name: '钱七', department: '西村', position: '村主任', phone: '13500135001', responsibility: '负责西村日常管理和村民服务', family: [{ name: '钱小财', relationship: '侄子', phone: '13500135002' }] }
+            ];
+        }
+
+        // 从localStorage加载用户数据
+        function loadUsersFromLocalStorage() {
+            const savedData = localStorage.getItem('townshipUsers');
+            if (savedData) {
+                return JSON.parse(savedData);
+            }
+            // 默认数据
+            return [
+                { id: 1, username: '123', password: '233', type: 'admin', nickname: '管理员' }
+            ];
+        }
+
+        // 从localStorage加载八卦数据
+        function loadGossipFromLocalStorage() {
+            const savedData = localStorage.getItem('townshipGossip');
+            if (savedData) {
+                return JSON.parse(savedData);
+            }
+            // 默认数据
+            return [
+                { id: 1, title: '张三升任党政办主任', content: '据可靠消息，张三同志因工作表现突出，被任命为党政办主任。', date: '2026-03-01', personId: 1, authorId: 1, likes: 5, comments: [], nickname: '张三' },
+                { id: 2, title: '东村将建设新的文化广场', content: '东村计划投资50万元建设新的文化广场，预计下半年完工。', date: '2026-02-28', personId: 3, authorId: 2, likes: 3, comments: [], nickname: '东村' }
+            ];
+        }
+
+        // 从localStorage加载评论数据
+        function loadCommentsFromLocalStorage() {
+            const savedData = localStorage.getItem('townshipComments');
+            if (savedData) {
+                return JSON.parse(savedData);
+            }
+            // 默认数据
+            return [];
+        }
+
+        // 保存数据到localStorage
+        function saveToLocalStorage(data) {
+            localStorage.setItem('townshipAddressBook', JSON.stringify(data));
+        }
+
+        // 保存八卦数据到localStorage
+        function saveGossipToLocalStorage(data) {
+            localStorage.setItem('townshipGossip', JSON.stringify(data));
+        }
+
+        // 保存用户数据到localStorage
+        function saveUsersToLocalStorage(data) {
+            localStorage.setItem('townshipUsers', JSON.stringify(data));
+        }
+
+        // 保存评论数据到localStorage
+        function saveCommentsToLocalStorage(data) {
+            localStorage.setItem('townshipComments', JSON.stringify(data));
+        }
+
+        // 全局变量
+        let peopleData = loadFromLocalStorage();
+        let gossipData = loadGossipFromLocalStorage();
+        let usersData = loadUsersFromLocalStorage();
+        let commentsData = loadCommentsFromLocalStorage();
+        let currentPersonId = null;
+        let currentUser = null;
+        let currentGossipId = null;
+
+        // DOM 元素
+        const modal = document.getElementById('modal');
+        const detailModal = document.getElementById('detail-modal');
+        const hierarchyModal = document.getElementById('hierarchy-modal');
+        const voiceModal = document.getElementById('voice-modal');
+        const ocrModal = document.getElementById('ocr-modal');
+        const gossipModal = document.getElementById('gossip-modal');
+        const loginModal = document.getElementById('login-modal');
+        const downloadModal = document.getElementById('download-modal');
+        const commentModal = document.getElementById('comment-modal');
+        const addBtn = document.getElementById('add-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const voiceBtn = document.getElementById('voice-btn');
+        const ocrBtn = document.getElementById('ocr-btn');
+        const addGossipBtn = document.getElementById('add-gossip-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const userBtn = document.getElementById('user-btn');
+        const closeModal = document.getElementById('close-modal');
+        const closeDetailModal = document.getElementById('close-detail-modal');
+        const closeHierarchyModal = document.getElementById('close-hierarchy-modal');
+        const closeVoiceModal = document.getElementById('close-voice-modal');
+        const closeOcrModal = document.getElementById('close-ocr-modal');
+        const closeGossipModal = document.getElementById('close-gossip-modal');
+        const closeLoginModal = document.getElementById('close-login-modal');
+        const closeDownloadModal = document.getElementById('close-download-modal');
+        const closeCommentModal = document.getElementById('close-comment-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const cancelVoiceBtn = document.getElementById('cancel-voice-btn');
+        const cancelOcrBtn = document.getElementById('cancel-ocr-btn');
+        const cancelGossipBtn = document.getElementById('cancel-gossip-btn');
+        const cancelLoginBtn = document.getElementById('cancel-login-btn');
+        const cancelRegisterBtn = document.getElementById('cancel-register-btn');
+        const personForm = document.getElementById('person-form');
+        const gossipForm = document.getElementById('gossip-form');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const searchInput = document.getElementById('search-input');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const unitHeaders = document.querySelectorAll('.unit-header');
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const contentAreas = document.querySelectorAll('.content-area');
+        const loginTabs = document.querySelectorAll('.login-tab');
+        const emojiBtns = document.querySelectorAll('.emoji-btn');
+        const editBtn = document.getElementById('edit-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const startVoiceBtn = document.getElementById('start-voice-btn');
+        const copyVoiceBtn = document.getElementById('copy-voice-btn');
+        const ocrImage = document.getElementById('ocr-image');
+        const ocrPreview = document.getElementById('ocr-preview');
+        const startOcrBtn = document.getElementById('start-ocr-btn');
+        const autoDownloadBtn = document.getElementById('auto-download-btn');
+        const submitCommentBtn = document.getElementById('submit-comment-btn');
+
+        // 初始化管理关系图
+        function initRelationshipChart() {
+            const chart = echarts.init(document.getElementById('relationship-chart'));
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}'
+                },
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [
+                    {
+                        type: 'graph',
+                        layout: 'hierarchical',
+                        roam: false,
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            fontSize: 12
+                        },
+                        data: [
+                            { name: '乡镇政府', itemStyle: { color: '#1e40af' } },
+                            { name: '党政办', itemStyle: { color: '#3b82f6' } },
+                            { name: '经济发展办', itemStyle: { color: '#3b82f6' } },
+                            { name: '社会事务办', itemStyle: { color: '#3b82f6' } },
+                            { name: '综合治理办', itemStyle: { color: '#3b82f6' } },
+                            { name: '东村', itemStyle: { color: '#60a5fa' } },
+                            { name: '西村', itemStyle: { color: '#60a5fa' } },
+                            { name: '南村', itemStyle: { color: '#60a5fa' } },
+                            { name: '北村', itemStyle: { color: '#60a5fa' } }
+                        ],
+                        links: [
+                            { source: '乡镇政府', target: '党政办' },
+                            { source: '乡镇政府', target: '经济发展办' },
+                            { source: '乡镇政府', target: '社会事务办' },
+                            { source: '乡镇政府', target: '综合治理办' },
+                            { source: '乡镇政府', target: '东村' },
+                            { source: '乡镇政府', target: '西村' },
+                            { source: '乡镇政府', target: '南村' },
+                            { source: '乡镇政府', target: '北村' }
+                        ],
+                        lineStyle: {
+                            color: '#94a3b8',
+                            width: 2,
+                            curveness: 0.1
+                        }
+                    }
+                ]
+            };
+            chart.setOption(option);
+
+            // 响应式调整
+            window.addEventListener('resize', () => {
+                chart.resize();
+            });
+        }
+
+        // 初始化部门层级关系图
+        function initHierarchyChart(department) {
+            const chart = echarts.init(document.getElementById('hierarchy-chart'));
+            
+            // 根据部门生成层级关系
+            let data = [];
+            let links = [];
+            
+            // 模拟层级数据
+            if (department === '党政办') {
+                data = [
+                    { name: '党政办', itemStyle: { color: '#1e40af' } },
+                    { name: '主任', itemStyle: { color: '#3b82f6' } },
+                    { name: '副主任', itemStyle: { color: '#60a5fa' } },
+                    { name: '科员', itemStyle: { color: '#93c5fd' } }
+                ];
+                links = [
+                    { source: '党政办', target: '主任' },
+                    { source: '主任', target: '副主任' },
+                    { source: '副主任', target: '科员' }
+                ];
+            } else if (department === '东村') {
+                data = [
+                    { name: '东村', itemStyle: { color: '#1e40af' } },
+                    { name: '党支部书记', itemStyle: { color: '#3b82f6' } },
+                    { name: '村主任', itemStyle: { color: '#60a5fa' } },
+                    { name: '村委委员', itemStyle: { color: '#93c5fd' } }
+                ];
+                links = [
+                    { source: '东村', target: '党支部书记' },
+                    { source: '党支部书记', target: '村主任' },
+                    { source: '村主任', target: '村委委员' }
+                ];
+            } else {
+                data = [
+                    { name: department, itemStyle: { color: '#1e40af' } },
+                    { name: '负责人', itemStyle: { color: '#3b82f6' } },
+                    { name: '工作人员', itemStyle: { color: '#60a5fa' } }
+                ];
+                links = [
+                    { source: department, target: '负责人' },
+                    { source: '负责人', target: '工作人员' }
+                ];
+            }
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}'
+                },
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [
+                    {
+                        type: 'graph',
+                        layout: 'hierarchical',
+                        roam: false,
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            fontSize: 12
+                        },
+                        data: data,
+                        links: links,
+                        lineStyle: {
+                            color: '#94a3b8',
+                            width: 2,
+                            curveness: 0.1
+                        }
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+
+            // 响应式调整
+            window.addEventListener('resize', () => {
+                chart.resize();
+            });
+        }
+
+        // 初始化亲属关系图
+        function initFamilyChart() {
+            const chart = echarts.init(document.getElementById('family-chart'));
+            
+            // 生成亲属关系数据
+            let data = [];
+            let links = [];
+            
+            // 添加人员节点
+            peopleData.forEach(person => {
+                data.push({ 
+                    name: person.name, 
+                    itemStyle: { color: '#1e40af' },
+                    symbolSize: 40
+                });
+                
+                // 添加亲属节点和关系
+                if (person.family && person.family.length > 0) {
+                    person.family.forEach(familyMember => {
+                        const familyName = `${familyMember.name}(${familyMember.relationship})`;
+                        data.push({ 
+                            name: familyName, 
+                            itemStyle: { color: '#60a5fa' },
+                            symbolSize: 30
+                        });
+                        links.push({ 
+                            source: person.name, 
+                            target: familyName,
+                            label: { show: true, formatter: familyMember.relationship }
+                        });
+                    });
+                }
+            });
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}'
+                },
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [
+                    {
+                        type: 'graph',
+                        layout: 'force',
+                        roam: true,
+                        label: {
+                            show: true,
+                            position: 'right',
+                            fontSize: 12
+                        },
+                        data: data,
+                        links: links,
+                        lineStyle: {
+                            color: '#94a3b8',
+                            width: 2,
+                            curveness: 0.1
+                        },
+                        force: {
+                            repulsion: 1000,
+                            edgeLength: [80, 120]
+                        }
+                    }
+                ]
+            };
+            
+            chart.setOption(option);
+
+            // 响应式调整
+            window.addEventListener('resize', () => {
+                chart.resize();
+            });
+        }
+
+        // 打开添加模态框
+        addBtn.addEventListener('click', () => {
+            document.getElementById('modal-title').textContent = '添加人员';
+            document.getElementById('person-id').value = '';
+            personForm.reset();
+            modal.classList.remove('hidden');
+        });
+
+        // 打开编辑模态框
+        function openEditModal(person) {
+            document.getElementById('modal-title').textContent = '编辑人员';
+            document.getElementById('person-id').value = person.id;
+            document.getElementById('name').value = person.name;
+            document.getElementById('department').value = person.department;
+            document.getElementById('position').value = person.position;
+            document.getElementById('phone').value = person.phone;
+            document.getElementById('responsibility').value = person.responsibility;
+            modal.classList.remove('hidden');
+        }
+
+        // 关闭模态框
+        closeModal.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // 关闭详情模态框
+        closeDetailModal.addEventListener('click', () => {
+            detailModal.classList.add('hidden');
+        });
+
+        // 关闭层级关系模态框
+        closeHierarchyModal.addEventListener('click', () => {
+            hierarchyModal.classList.add('hidden');
+        });
+
+        // 提交表单
+        personForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('person-id').value;
+            const name = document.getElementById('name').value;
+            const department = document.getElementById('department').value;
+            const position = document.getElementById('position').value;
+            const phone = document.getElementById('phone').value;
+            const responsibility = document.getElementById('responsibility').value;
+
+            if (name && department && position && phone) {
+                if (id) {
+                    // 编辑现有人员
+                    const index = peopleData.findIndex(p => p.id == id);
+                    if (index !== -1) {
+                        peopleData[index] = {
+                            id: parseInt(id),
+                            name,
+                            department,
+                            position,
+                            phone,
+                            responsibility
+                        };
+                        alert('编辑成功！');
+                    }
+                } else {
+                    // 添加新人员
+                    const newId = Math.max(...peopleData.map(p => p.id), 0) + 1;
+                    peopleData.push({
+                        id: newId,
+                        name,
+                        department,
+                        position,
+                        phone,
+                        responsibility
+                    });
+                    alert('添加成功！');
+                }
+                
+                // 保存到localStorage
+                saveToLocalStorage(peopleData);
+                modal.classList.add('hidden');
+                // 刷新人员列表
+                renderPersonList(peopleData);
+            } else {
+                alert('请填写完整信息');
+            }
+        });
+
+        // 删除人员
+        deleteBtn.addEventListener('click', () => {
+            if (currentPersonId) {
+                if (confirm('确定要删除该人员吗？')) {
+                    peopleData = peopleData.filter(p => p.id !== currentPersonId);
+                    // 保存到localStorage
+                    saveToLocalStorage(peopleData);
+                    detailModal.classList.add('hidden');
+                    // 刷新人员列表
+                    renderPersonList(peopleData);
+                    alert('删除成功！');
+                }
+            }
+        });
+
+        // 编辑按钮点击事件
+        editBtn.addEventListener('click', () => {
+            const person = peopleData.find(p => p.id === currentPersonId);
+            if (person) {
+                detailModal.classList.add('hidden');
+                openEditModal(person);
+            }
+        });
+
+        // 导出通讯录
+        exportBtn.addEventListener('click', () => {
+            // 生成CSV内容
+            let csvContent = "姓名,单位,职务,电话,分工\n";
+            peopleData.forEach(person => {
+                csvContent += `${person.name},${person.department},${person.position},${person.phone},${person.responsibility}\n`;
+            });
+
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `乡镇通讯录_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // 分类标签点击事件
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有按钮的活动状态
+                categoryBtns.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+                });
+                // 添加当前按钮的活动状态
+                btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+                btn.classList.add('bg-primary', 'text-white');
+
+                // 这里可以根据分类筛选人员
+                const category = btn.textContent.trim();
+                if (category === '全部') {
+                    renderPersonList(peopleData);
+                } else if (category === '科室') {
+                    const filtered = peopleData.filter(p => ['党政办', '经济发展办', '社会事务办', '综合治理办'].includes(p.department));
+                    renderPersonList(filtered);
+                } else if (category === '村庄') {
+                    const filtered = peopleData.filter(p => ['东村', '西村', '南村', '北村'].includes(p.department));
+                    renderPersonList(filtered);
+                } else if (category === '领导') {
+                    const filtered = peopleData.filter(p => p.position.includes('主任') || p.position.includes('书记'));
+                    renderPersonList(filtered);
+                }
+            });
+        });
+
+        // 单位分类展开/折叠
+        unitHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('i');
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    icon.classList.remove('rotate-180');
+                } else {
+                    content.style.display = 'none';
+                    icon.classList.add('rotate-180');
+                }
+            });
+        });
+
+        // 单位点击事件 - 显示层级关系
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.unit-item')) {
+                const unitItem = e.target.closest('.unit-item');
+                const department = unitItem.querySelector('span').textContent;
+                initHierarchyChart(department);
+                hierarchyModal.classList.remove('hidden');
+            }
+        });
+
+        // 人员点击事件
+        function bindPersonItemEvents() {
+            document.querySelectorAll('.person-item').forEach((item) => {
+                item.addEventListener('click', () => {
+                    const id = parseInt(item.dataset.id);
+                    const person = peopleData.find(p => p.id === id);
+                    if (person) {
+                        currentPersonId = person.id;
+                        document.getElementById('detail-name').textContent = person.name;
+                        document.getElementById('detail-department').textContent = person.department;
+                        document.getElementById('detail-position').textContent = person.position;
+                        document.getElementById('detail-phone').textContent = person.phone;
+                        document.getElementById('detail-responsibility').textContent = person.responsibility;
+                        detailModal.classList.remove('hidden');
+                    }
+                });
+            });
+        }
+
+        // 渲染人员列表
+        function renderPersonList(data) {
+            const personList = document.getElementById('person-list');
+            personList.innerHTML = '';
+            
+            data.forEach(person => {
+                const item = document.createElement('div');
+                item.className = 'person-item p-3 border-b border-gray-100 hover:bg-gray-50 rounded cursor-pointer';
+                item.dataset.id = person.id;
+                item.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-medium">${person.name}</h3>
+                            <p class="text-sm text-gray-500">${person.department} ${person.position}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-500">${person.phone}</p>
+                            <button class="text-primary text-sm mt-1 flex items-center justify-end">
+                                <i class="fa fa-phone mr-1"></i> 拨打电话
+                            </button>
+                        </div>
+                    </div>
+                `;
+                personList.appendChild(item);
+            });
+            
+            // 重新绑定事件
+            bindPersonItemEvents();
+        }
+
+        // 搜索功能
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filtered = peopleData.filter(person => 
+                person.name.toLowerCase().includes(searchTerm) ||
+                person.department.toLowerCase().includes(searchTerm) ||
+                person.position.toLowerCase().includes(searchTerm) ||
+                person.phone.includes(searchTerm)
+            );
+            renderPersonList(filtered);
+        });
+
+        // 渲染亲属列表
+        function renderFamilyList() {
+            const familyList = document.getElementById('family-list');
+            familyList.innerHTML = '';
+            
+            peopleData.forEach(person => {
+                if (person.family && person.family.length > 0) {
+                    const personItem = document.createElement('div');
+                    personItem.className = 'mb-4';
+                    personItem.innerHTML = `
+                        <h4 class="font-medium mb-2">${person.name} (${person.department} ${person.position})</h4>
+                        <div class="space-y-2 pl-4 border-l-2 border-gray-200">
+                            ${person.family.map(member => `
+                                <div class="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                                    <div>
+                                        <span class="font-medium">${member.name}</span>
+                                        <span class="text-sm text-gray-500 ml-2">${member.relationship}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm text-gray-500">${member.phone}</p>
+                                        <button class="text-primary text-sm mt-1 flex items-center justify-end">
+                                            <i class="fa fa-phone mr-1"></i> 拨打电话
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    familyList.appendChild(personItem);
+                }
+            });
+        }
+
+        // 渲染八卦列表
+        function renderGossipList() {
+            const gossipList = document.getElementById('gossip-list');
+            gossipList.innerHTML = '';
+            
+            gossipData.forEach(gossip => {
+                const person = peopleData.find(p => p.id === gossip.personId);
+                const personName = person ? person.name : '未知';
+                const author = usersData.find(u => u.id === gossip.authorId);
+                const authorName = author ? author.nickname : '匿名';
+                
+                const gossipItem = document.createElement('div');
+                gossipItem.className = 'bg-white rounded-xl card-shadow p-4';
+                gossipItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-medium">${gossip.title}</h3>
+                        <span class="text-xs text-gray-500">${gossip.nickname || authorName}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">${gossip.content}</p>
+                    ${person ? `<p class="text-sm text-gray-500 mt-2">相关人员：${personName}</p>` : ''}
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                        <div class="flex space-x-4">
+                            <button class="like-btn flex items-center text-gray-500 hover:text-red-500" data-id="${gossip.id}">
+                                <i class="fa fa-heart mr-1"></i>
+                                <span>${gossip.likes || 0}</span>
+                            </button>
+                            <button class="comment-btn flex items-center text-gray-500 hover:text-primary" data-id="${gossip.id}">
+                                <i class="fa fa-comment mr-1"></i>
+                                <span>${gossip.comments ? gossip.comments.length : 0}</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-400">${gossip.date}</p>
+                    </div>
+                `;
+                gossipList.appendChild(gossipItem);
+            });
+            
+            // 绑定点赞和评论按钮事件
+            document.querySelectorAll('.like-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const gossipId = parseInt(this.dataset.id);
+                    const gossip = gossipData.find(g => g.id === gossipId);
+                    if (gossip) {
+                        gossip.likes = (gossip.likes || 0) + 1;
+                        saveGossipToLocalStorage(gossipData);
+                        renderGossipList();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.comment-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentGossipId = parseInt(this.dataset.id);
+                    renderCommentList(currentGossipId);
+                    commentModal.classList.remove('hidden');
+                });
+            });
+        }
+
+        // 渲染评论列表
+        function renderCommentList(gossipId) {
+            const commentList = document.getElementById('comment-list');
+            commentList.innerHTML = '';
+            
+            const comments = commentsData.filter(c => c.gossipId === gossipId);
+            
+            if (comments.length === 0) {
+                commentList.innerHTML = '<p class="text-center text-gray-500">暂无评论</p>';
+                return;
+            }
+            
+            comments.forEach(comment => {
+                const user = usersData.find(u => u.id === comment.userId);
+                const userName = user ? user.nickname : '匿名';
+                
+                const commentItem = document.createElement('div');
+                commentItem.className = 'p-3 border-b border-gray-100';
+                commentItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <span class="font-medium">${userName}</span>
+                        <span class="text-xs text-gray-400">${comment.date}</span>
+                    </div>
+                    <p class="text-sm mt-1">${comment.content}</p>
+                `;
+                commentList.appendChild(commentItem);
+            });
+        }
+
+        // 填充八卦表单的人员选项
+        function populateGossipPersonOptions() {
+            const select = document.getElementById('gossip-person');
+            select.innerHTML = '<option value="">请选择</option>';
+            
+            peopleData.forEach(person => {
+                const option = document.createElement('option');
+                option.value = person.id;
+                option.textContent = `${person.name} (${person.department})`;
+                select.appendChild(option);
+            });
+        }
+
+        // 底部导航切换
+        navBtns.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                // 移除所有导航按钮的活动状态
+                navBtns.forEach(b => {
+                    b.classList.remove('text-primary');
+                    b.classList.add('text-gray-500');
+                });
+                // 添加当前按钮的活动状态
+                btn.classList.remove('text-gray-500');
+                btn.classList.add('text-primary');
+                
+                // 隐藏所有内容区域
+                contentAreas.forEach(area => {
+                    area.classList.add('hidden');
+                });
+                // 显示对应内容区域
+                contentAreas[index].classList.remove('hidden');
+                
+                // 初始化对应内容
+                if (index === 1) { // 亲属板块
+                    initFamilyChart();
+                    renderFamilyList();
+                } else if (index === 2) { // 八卦板块
+                    renderGossipList();
+                    populateGossipPersonOptions();
+                }
+            });
+        });
+
+        // 语音转文字功能
+        voiceBtn.addEventListener('click', () => {
+            voiceModal.classList.remove('hidden');
+        });
+
+        closeVoiceModal.addEventListener('click', () => {
+            voiceModal.classList.add('hidden');
+        });
+
+        cancelVoiceBtn.addEventListener('click', () => {
+            voiceModal.classList.add('hidden');
+        });
+
+        startVoiceBtn.addEventListener('click', () => {
+            // 模拟语音识别
+            setTimeout(() => {
+                document.getElementById('voice-result').value = '这是一段语音识别的结果，测试语音转文字功能。';
+            }, 1000);
+        });
+
+        copyVoiceBtn.addEventListener('click', () => {
+            const result = document.getElementById('voice-result').value;
+            navigator.clipboard.writeText(result).then(() => {
+                alert('复制成功！');
+            });
+        });
+
+        // 图片转文字识别功能
+        ocrBtn.addEventListener('click', () => {
+            ocrModal.classList.remove('hidden');
+        });
+
+        closeOcrModal.addEventListener('click', () => {
+            ocrModal.classList.add('hidden');
+        });
+
+        cancelOcrBtn.addEventListener('click', () => {
+            ocrModal.classList.add('hidden');
+        });
+
+        ocrImage.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    ocrPreview.innerHTML = `<img src="${event.target.result}" class="max-h-40 mx-auto">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        startOcrBtn.addEventListener('click', () => {
+            // 模拟OCR识别
+            setTimeout(() => {
+                document.getElementById('ocr-result').value = '这是图片识别的结果，测试OCR功能。';
+            }, 1000);
+        });
+
+        // 表情包功能
+        emojiBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const emoji = this.textContent;
+                const textarea = this.closest('form').querySelector('textarea');
+                if (textarea) {
+                    textarea.value += emoji;
+                }
+            });
+        });
+
+        // 八卦功能
+        addGossipBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                alert('请先登录');
+                loginModal.classList.remove('hidden');
+                return;
+            }
+            populateGossipPersonOptions();
+            gossipModal.classList.remove('hidden');
+        });
+
+        closeGossipModal.addEventListener('click', () => {
+            gossipModal.classList.add('hidden');
+        });
+
+        cancelGossipBtn.addEventListener('click', () => {
+            gossipModal.classList.add('hidden');
+        });
+
+        gossipForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('gossip-title').value;
+            const content = document.getElementById('gossip-content').value;
+            const personId = parseInt(document.getElementById('gossip-person').value) || null;
+            const nickname = prompt('请输入你的外号（可选）：');
+            
+            if (title && content) {
+                const newId = Math.max(...gossipData.map(g => g.id), 0) + 1;
+                gossipData.push({
+                    id: newId,
+                    title,
+                    content,
+                    date: new Date().toISOString().split('T')[0],
+                    personId,
+                    authorId: currentUser.id,
+                    likes: 0,
+                    comments: [],
+                    nickname: nickname || currentUser.nickname
+                });
+                
+                // 保存到localStorage
+                saveGossipToLocalStorage(gossipData);
+                gossipModal.classList.add('hidden');
+                renderGossipList();
+                alert('添加成功！');
+            } else {
+                alert('请填写完整信息');
+            }
+        });
+
+        // 评论功能
+        submitCommentBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                alert('请先登录');
+                loginModal.classList.remove('hidden');
+                return;
+            }
+            
+            const content = document.getElementById('comment-content').value;
+            if (content && currentGossipId) {
+                const newId = Math.max(...commentsData.map(c => c.id), 0) + 1;
+                commentsData.push({
+                    id: newId,
+                    gossipId: currentGossipId,
+                    userId: currentUser.id,
+                    content,
+                    date: new Date().toISOString().split('T')[0]
+                });
+                
+                // 保存到localStorage
+                saveCommentsToLocalStorage(commentsData);
+                renderCommentList(currentGossipId);
+                document.getElementById('comment-content').value = '';
+                alert('评论成功！');
+            } else {
+                alert('请输入评论内容');
+            }
+        });
+
+        // 关闭评论模态框
+        closeCommentModal.addEventListener('click', () => {
+            commentModal.classList.add('hidden');
+        });
+
+        // 登录/注册功能
+        userBtn.addEventListener('click', () => {
+            if (currentUser) {
+                if (confirm('确定要退出登录吗？')) {
+                    currentUser = null;
+                    userBtn.innerHTML = '<i class="fa fa-user mr-2"></i>登录';
+                    alert('已退出登录');
+                }
+            } else {
+                loginModal.classList.remove('hidden');
+            }
+        });
+
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.classList.add('hidden');
+        });
+
+        cancelLoginBtn.addEventListener('click', () => {
+            loginModal.classList.add('hidden');
+        });
+
+        cancelRegisterBtn.addEventListener('click', () => {
+            loginModal.classList.add('hidden');
+        });
+
+        // 登录标签切换
+        loginTabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                // 移除所有标签的活动状态
+                loginTabs.forEach(t => {
+                    t.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                    t.classList.add('text-gray-500');
+                });
+                // 添加当前标签的活动状态
+                tab.classList.remove('text-gray-500');
+                tab.classList.add('text-primary', 'border-b-2', 'border-primary');
+                
+                // 切换表单
+                if (index === 0) {
+                    loginForm.classList.remove('hidden');
+                    registerForm.classList.add('hidden');
+                    document.getElementById('login-modal-title').textContent = '用户登录';
+                } else {
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.remove('hidden');
+                    document.getElementById('login-modal-title').textContent = '用户注册';
+                }
+            });
+        });
+
+        // 登录表单提交
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const user = usersData.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = user;
+                userBtn.innerHTML = `<i class="fa fa-user mr-2"></i>${user.nickname}`;
+                loginModal.classList.add('hidden');
+                alert('登录成功！');
+            } else {
+                alert('用户名或密码错误');
+            }
+        });
+
+        // 注册表单提交
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const userType = document.getElementById('user-type').value;
+            const nickname = prompt('请输入你的外号：');
+            
+            if (username && password && confirmPassword) {
+                if (password !== confirmPassword) {
+                    alert('两次输入的密码不一致');
+                    return;
+                }
+                
+                if (usersData.some(u => u.username === username)) {
+                    alert('用户名已存在');
+                    return;
+                }
+                
+                const newId = Math.max(...usersData.map(u => u.id), 0) + 1;
+                usersData.push({
+                    id: newId,
+                    username,
+                    password,
+                    type: userType,
+                    nickname: nickname || username
+                });
+                
+                // 保存到localStorage
+                saveUsersToLocalStorage(usersData);
+                alert('注册成功！请登录');
+                
+                // 切换到登录表单
+                loginTabs[0].click();
+            } else {
+                alert('请填写完整信息');
+            }
+        });
+
+        // 下载应用功能
+        downloadBtn.addEventListener('click', () => {
+            downloadModal.classList.remove('hidden');
+        });
+
+        closeDownloadModal.addEventListener('click', () => {
+            downloadModal.classList.add('hidden');
+        });
+
+        autoDownloadBtn.addEventListener('click', () => {
+            // 模拟自动检测设备并下载
+            setTimeout(() => {
+                alert('正在下载适合您设备的版本...');
+                // 这里可以添加实际的下载链接
+                // 例如：window.location.href = 'downloads/app-setup.exe';
+                downloadModal.classList.add('hidden');
+            }, 1000);
+        });
+
+        // 手动下载按钮事件
+        document.querySelectorAll('#download-modal button:not(#close-download-modal):not(#auto-download-btn)').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const platform = this.querySelector('span').textContent;
+                alert(`正在下载${platform}...`);
+                // 这里可以添加实际的下载链接
+                // 例如：window.location.href = `downloads/app-${platform.replace(' 版本', '').toLowerCase()}.zip`;
+                downloadModal.classList.add('hidden');
+            });
+        });
+
+        // 初始化
+        function init() {
+            initRelationshipChart();
+            renderPersonList(peopleData);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
