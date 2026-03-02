@@ -1,0 +1,12 @@
+{
+  "appId": "com.township.addressbook",
+  "appName": "乡镇工作通讯录",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "cordova": {}
+}

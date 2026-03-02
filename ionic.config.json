@@ -1,0 +1,7 @@
+{
+  "name": "township-address-book",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue"
+}
